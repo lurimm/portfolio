@@ -2,20 +2,39 @@ import React, { Component } from "react";
 // import { Link } from "react-router-dom";
 import logo from "./logo.svg";
 import "./App.css";
-import ReactAudioPlayer from "react-audio-player";
+import axios from 'axios'
+import { weatherAPIKey } from './index'
 
 class App extends Component {
   constructor() {
     super();
 
     this.state = {
-      output: "",
-      about: null
+      output: '',
+      about: null,
+      weather: null,
+      lat: null,
+      long: null,
+      temp: null,
+      weatherDescr: null,
     };
   }
 
   componentDidMount() {
     this.outputInstructions();
+    this.getCurrentLocation();
+  }
+
+  getWeather() {
+    axios.get(`http://api.openweathermap.org/data/2.5/weather?lat=${this.state.lat}&lon=${this.state.long}&APPID=${weatherAPIKey}`)
+    .then(res => {
+      console.log(res.data)
+      this.setState({
+        temp: Math.floor(res.data.main.temp * 9 / 5 - 459.67),
+        weatherDescr: res.data.weather[0].description,
+      })
+    })
+    console.log(this.state)
   }
 
   typing(evt) {
@@ -24,6 +43,23 @@ class App extends Component {
     if (typeof input === "string") {
       audio.play();
     }
+  }
+  
+  getCurrentLocation() {
+    let options = {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0, 
+    }
+    navigator.geolocation.getCurrentPosition((position, error, options) => {
+      let lat = position.coords.latitude;
+      let long = position.coords.longitude;
+      this.setState({
+        lat, long
+      })
+      this.getWeather()
+      console.log(this.state)
+    })
   }
 
   outputForWorkLinks(projects, work) {
@@ -42,7 +78,7 @@ class App extends Component {
 
 // weather, latest news, use thes API'S
 
-  outputForAboutMe(about) {
+  mainOutput(about) {
     if (this.state.about === true) {
       return (
         <div>
@@ -54,22 +90,37 @@ class App extends Component {
           <br />
         </div>
       );
+    } else if (this.state.weather === true) {
+      console.log(this.state)
+      return this.outputForWeather()
     } else {
       return this.outputInstructions();
     }
+  }
+
+  outputForWeather() {
+    return (
+      <div>
+        <p className="about">Hi,</p>
+        <br />
+        <p className="about">It is {this.state.temp} degrees Farenheit</p>
+        <p className="about">and a {this.state.weatherDescr} kind of day.</p>
+        <br />
+      </div>
+    )
   }
 
   outputInstructions() {
     return (
       <div>
         <p className="about-title">Commands:</p>
-        <br />
         <p className="about">About</p>
         <p className="about">Projects</p>
         <p className="about">Links</p>
+        <p className="about">Weather</p>
         <br />
       </div>
-    );
+    )
   }
 
   outputAudio() {
@@ -113,12 +164,16 @@ class App extends Component {
       this.setState({ output: "", about: true });
       evt.target.inputval.value = "";
       this.outputAudio();
-      return this.outputForAboutMe();
+      return this.mainOutput();
+    } else if (input === 'weather') {
+      this.setState({weather: true})
+      this.outputAudio()
+      this.mainOutput()
     } else {
       this.setState({ output: "", about: false });
       evt.target.inputval.value = "";
       this.outputAudio();
-      return this.outputForAboutMe();
+      return this.mainOutput();
     }
   }
 
@@ -156,7 +211,7 @@ class App extends Component {
             <p className="white">OUTPUT</p>
             <div className="output-box">
               {typeof work === "string"
-                ? this.outputForAboutMe(about)
+                ? this.mainOutput(about)
                 : this.outputForWorkLinks(projects, work)}
             </div>
             <p>hi</p>
