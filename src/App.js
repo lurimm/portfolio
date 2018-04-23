@@ -98,7 +98,7 @@ class App extends Component {
   }
 
   mainOutput() {
-    if (this.state.input === 'about') {
+    if (this.state.input === 'about' || this.state.input === 'hi') {
         return (
           <div className="about">
             <p>Hi,</p>
