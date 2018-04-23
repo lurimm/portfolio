@@ -62,7 +62,7 @@ class App extends Component {
   }
   
   getWeather() {
-    axios.get(`http://api.openweathermap.org/data/2.5/weather?lat=${this.state.lat}&lon=${this.state.long}&APPID=${weatherAPIKey}`)
+    axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${this.state.lat}&lon=${this.state.long}&APPID=${weatherAPIKey}`)
     .then(res => {
       console.log(res.data)
       this.setState({
