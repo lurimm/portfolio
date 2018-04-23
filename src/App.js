@@ -3,7 +3,8 @@ import React, { Component } from "react";
 import logo from "./logo.svg";
 import "./App.css";
 import axios from 'axios'
-import { weatherAPIKey } from './index'
+import { weatherAPIKey, newsAPIKey } from './index'
+
 
 class App extends Component {
   constructor() {
@@ -11,20 +12,55 @@ class App extends Component {
 
     this.state = {
       output: '',
-      about: null,
-      weather: null,
+      input: '',
       lat: null,
       long: null,
+      cityName: '',
       temp: null,
       weatherDescr: null,
+      newsTitle: '',
+      newsDesc: '',
+      newsUrl: '',
     };
   }
+
+
 
   componentDidMount() {
     this.outputInstructions();
     this.getCurrentLocation();
+    this.getNews();
   }
 
+  getNews() {
+    axios.get(`https://newsapi.org/v2/top-headlines?country=us&apiKey=${newsAPIKey}`)
+    .then(res => {
+      this.setState({
+        newsTitle: res.data.articles[0].title,
+        newsDesc: res.data.articles[0].description,
+        newsUrl: res.data.articles[0].url,
+      })
+    })
+    .then(() => console.log(this.state))
+  }
+
+  getCurrentLocation() {
+    let options = {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0, 
+    }
+    navigator.geolocation.getCurrentPosition((position, error, options) => {
+      let lat = position.coords.latitude;
+      let long = position.coords.longitude;
+      this.setState({
+        lat, long
+      })
+      console.log(this.state)
+      this.getWeather()
+    })
+  }
+  
   getWeather() {
     axios.get(`http://api.openweathermap.org/data/2.5/weather?lat=${this.state.lat}&lon=${this.state.long}&APPID=${weatherAPIKey}`)
     .then(res => {
@@ -32,6 +68,7 @@ class App extends Component {
       this.setState({
         temp: Math.floor(res.data.main.temp * 9 / 5 - 459.67),
         weatherDescr: res.data.weather[0].description,
+        cityName: res.data.name,
       })
     })
     console.log(this.state)
@@ -45,27 +82,11 @@ class App extends Component {
     }
   }
   
-  getCurrentLocation() {
-    let options = {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0, 
-    }
-    navigator.geolocation.getCurrentPosition((position, error, options) => {
-      let lat = position.coords.latitude;
-      let long = position.coords.longitude;
-      this.setState({
-        lat, long
-      })
-      this.getWeather()
-      console.log(this.state)
-    })
-  }
 
   outputForWorkLinks(projects, work) {
     return projects.map((project, idx) => {
       return (
-        <div key={idx}>
+        <div className="about" key={idx}>
           <br />
           <a className="anchor" target="_blank" href={work[project]}>
             {project}
@@ -76,23 +97,22 @@ class App extends Component {
     });
   }
 
-// weather, latest news, use thes API'S
-
-  mainOutput(about) {
-    if (this.state.about === true) {
-      return (
-        <div>
-          <p className="about">Hi,</p>
-          <br />
-          <p className="about">I'm a full stack developer</p>
-          <p className="about">specializing in javascript and</p>
-          <p className="about">making turkey sandwiches.</p>
-          <br />
-        </div>
-      );
-    } else if (this.state.weather === true) {
-      console.log(this.state)
+  mainOutput() {
+    if (this.state.input === 'about') {
+        return (
+          <div className="about">
+            <p>Hi,</p>
+            <br />
+            <p>I'm a full stack developer</p>
+            <p>specializing in javascript and</p>
+            <p>making turkey sandwiches.</p>
+            <br />
+          </div>
+        )
+    } else if (this.state.input === 'weather') {
       return this.outputForWeather()
+    } else if (this.state.input === 'latest news') {
+      return this.outputForNews();
     } else {
       return this.outputInstructions();
     }
@@ -100,12 +120,25 @@ class App extends Component {
 
   outputForWeather() {
     return (
-      <div>
-        <p className="about">Hi,</p>
+      <div className="about">
+        <p>Hi,</p>
+        <br/>
+        <p>It is {this.state.temp} degrees Farenheit</p>
+        <p>and a {this.state.weatherDescr} kind of</p>
+        day in {this.state.cityName}.
         <br />
-        <p className="about">It is {this.state.temp} degrees Farenheit</p>
-        <p className="about">and a {this.state.weatherDescr} kind of day.</p>
-        <br />
+      </div>
+    )
+  }
+
+  outputForNews() {
+    return (
+      <div className="about-news">
+        <p >News:</p>
+        <a className="anchor-news" target="_blank" href={this.state.newsUrl}>
+          {this.state.newsTitle}   
+        </a>
+        <p>{this.state.newsDesc}</p>
       </div>
     )
   }
@@ -118,6 +151,7 @@ class App extends Component {
         <p className="about">Projects</p>
         <p className="about">Links</p>
         <p className="about">Weather</p>
+        <p className="about">Latest News</p>
         <br />
       </div>
     )
@@ -139,7 +173,8 @@ class App extends Component {
           "The Listening Room": "http://symbalplayer.firebaseapp.com",
           MapStack: "http://github.com/FSACapstone/MapIt",
           SUPERmarket: "http://sup3r-market.herokuapp.com"
-        }
+        },
+        input
       });
       evt.target.inputval.value = "";
       this.outputAudio();
@@ -149,8 +184,10 @@ class App extends Component {
         output: {
           Github: "https://github.com/lurimm",
           Instagram: "https://www.instagram.com/lurimm/",
-          Photography: "http://luis-rincon.com"
-        }
+          Photography: "http://luis-rincon.com",
+          YouTube: "https://www.youtube.com/channel/UCA2LI0774ZPTjxB-X-3mjSg?view_as=subscriber",
+        },
+        input
       });
       evt.target.inputval.value = "";
       this.outputAudio();
@@ -161,16 +198,22 @@ class App extends Component {
       input === "hi" ||
       input === "hello"
     ) {
-      this.setState({ output: "", about: true });
+      this.setState({ output: "", input });
       evt.target.inputval.value = "";
       this.outputAudio();
       return this.mainOutput();
     } else if (input === 'weather') {
-      this.setState({weather: true})
+      this.setState({output: "", input})
+      evt.target.inputval.value = "";
       this.outputAudio()
-      this.mainOutput()
+      return this.mainOutput()
+    } else if (input === 'latest news') {
+      this.setState({output: '', input})
+      evt.target.inputval.value = "";
+      this.outputAudio()
+      return this.mainOutput()
     } else {
-      this.setState({ output: "", about: false });
+      this.setState({ output: "", input });
       evt.target.inputval.value = "";
       this.outputAudio();
       return this.mainOutput();
@@ -184,6 +227,11 @@ class App extends Component {
     return (
       <div className="App">
         <h1 className="white luis">// LUIS RINCON //</h1>
+        <pre className='ascii'>
+        <code>{`
+        
+      `}</code>
+        </pre>
         <div className="panels">
           <div className="input-panel">
             <p className="white">INPUT</p>
@@ -211,7 +259,7 @@ class App extends Component {
             <p className="white">OUTPUT</p>
             <div className="output-box">
               {typeof work === "string"
-                ? this.mainOutput(about)
+                ? this.mainOutput()
                 : this.outputForWorkLinks(projects, work)}
             </div>
             <p>hi</p>
