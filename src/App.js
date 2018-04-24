@@ -4,7 +4,7 @@ import logo from "./logo.svg";
 import "./App.css";
 import axios from 'axios'
 import { weatherAPIKey, newsAPIKey } from './index'
-
+import IdleTimer from 'react-idle-timer'
 
 class App extends Component {
   constructor() {
@@ -23,9 +23,6 @@ class App extends Component {
       newsUrl: '',
     };
   }
-
-
-
   componentDidMount() {
     this.outputInstructions();
     this.getCurrentLocation();
@@ -41,7 +38,7 @@ class App extends Component {
         newsUrl: res.data.articles[0].url,
       })
     })
-    .then(() => console.log(this.state))
+    .catch(err => console.error(err))
   }
 
   getCurrentLocation() {
@@ -56,7 +53,6 @@ class App extends Component {
       this.setState({
         lat, long
       })
-      console.log(this.state)
       this.getWeather()
     })
   }
@@ -71,7 +67,8 @@ class App extends Component {
         cityName: res.data.name,
       })
     })
-    console.log(this.state)
+    .catch(err => console.error(err))
+    
   }
 
   typing(evt) {
@@ -98,7 +95,8 @@ class App extends Component {
   }
 
   mainOutput() {
-    if (this.state.input === 'about' || this.state.input === 'hi') {
+    let aboutInput = ['about', 'who are you', 'hi', 'hello']
+    if (aboutInput.includes(this.state.input)) {
         return (
           <div className="about">
             <p>Hi,</p>
@@ -146,7 +144,7 @@ class App extends Component {
   outputInstructions() {
     return (
       <div>
-        <p className="about-title">Commands:</p>
+        <p className="about-title">List of Commands:</p>
         <p className="about">About</p>
         <p className="about">Projects</p>
         <p className="about">Links</p>
@@ -167,7 +165,9 @@ class App extends Component {
     const projects = Object.keys(this.state.output) || this.state.output;
     const work = this.state.output;
     let input = evt.target.inputval.value;
-    if (input === "work" || input === "projects") {
+    let workInput = ['work', 'projects']
+    let aboutInput = ['about', 'who are you', 'hi', 'hello']
+    if (workInput.includes(input)) {
       this.setState({
         output: {
           "The Listening Room": "http://symbalplayer.firebaseapp.com",
@@ -183,6 +183,7 @@ class App extends Component {
       this.setState({
         output: {
           Github: "https://github.com/lurimm",
+          Medium: "https://medium.com/@luismiguelrincon",
           Instagram: "https://www.instagram.com/lurimm/",
           Photography: "http://luis-rincon.com",
           YouTube: "https://www.youtube.com/channel/UCA2LI0774ZPTjxB-X-3mjSg?view_as=subscriber",
@@ -192,12 +193,7 @@ class App extends Component {
       evt.target.inputval.value = "";
       this.outputAudio();
       return this.outputForWorkLinks(projects, work);
-    } else if (
-      input === "about" ||
-      input === "who are you" ||
-      input === "hi" ||
-      input === "hello"
-    ) {
+    } else if (aboutInput.includes(input)) {
       this.setState({ output: "", input });
       evt.target.inputval.value = "";
       this.outputAudio();
@@ -227,11 +223,7 @@ class App extends Component {
     return (
       <div className="App">
         <h1 className="white luis">// LUIS RINCON //</h1>
-        <pre className='ascii'>
-        <code>{`
-        
-      `}</code>
-        </pre>
+
         <div className="panels">
           <div className="input-panel">
             <p className="white">INPUT</p>
@@ -258,9 +250,9 @@ class App extends Component {
           <div className="output-panel">
             <p className="white">OUTPUT</p>
             <div className="output-box">
-              {typeof work === "string"
-                ? this.mainOutput()
-                : this.outputForWorkLinks(projects, work)}
+                {typeof work === "string"
+                  ? this.mainOutput()
+                  : this.outputForWorkLinks(projects, work)}
             </div>
             <p>hi</p>
           </div>

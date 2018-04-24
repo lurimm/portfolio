@@ -68,6 +68,7 @@ body {
   width: 225px;
   text-shadow: 0 0 5px rgba(192, 244, 218, 0.5);
   text-transform: uppercase;
+  overflow: auto;
   /* text-decoration: underline; */
 }
 
