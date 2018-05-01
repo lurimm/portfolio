@@ -1,10 +1,9 @@
 import React, { Component } from "react";
-// import { Link } from "react-router-dom";
 import logo from "./logo.svg";
 import "./App.css";
 import axios from 'axios'
 import { weatherAPIKey, newsAPIKey } from './index'
-import IdleTimer from 'react-idle-timer'
+import { WorkLinks, OutputInstructions, WeatherOutput, NewsOutput, AboutOutput, AskForLocation } from './components'
 
 class App extends Component {
   constructor() {
@@ -12,7 +11,7 @@ class App extends Component {
 
     this.state = {
       output: '',
-      input: '',
+      input: 'getting location',
       lat: null,
       long: null,
       cityName: '',
@@ -23,10 +22,20 @@ class App extends Component {
       newsUrl: '',
     };
   }
+
   componentDidMount() {
-    this.outputInstructions();
+    // this.outputInstructions();
+    this.askForLocation()
     this.getCurrentLocation();
     this.getNews();
+  }
+
+  outputInstructions() {
+    return <OutputInstructions/>
+  }
+
+  askForLocation() {
+    return <AskForLocation />
   }
 
   getNews() {
@@ -47,13 +56,20 @@ class App extends Component {
       timeout: 5000,
       maximumAge: 0, 
     }
-    navigator.geolocation.getCurrentPosition((position, error, options) => {
+    navigator.geolocation.getCurrentPosition((position) => {
       let lat = position.coords.latitude;
       let long = position.coords.longitude;
       this.setState({
         lat, long
       })
       this.getWeather()
+    }, (err) => {
+      if (err.code === err.PERMISSION_DENIED) {
+        console.log('you have denied access to this location')
+      } else {
+        this.setState({input: ''})
+        this.mainOutput()
+      }
     })
   }
   
@@ -71,7 +87,7 @@ class App extends Component {
     
   }
 
-  typing(evt) {
+  typing (evt) {
     let input = evt.target.value;
     let audio = document.getElementById("beep");
     if (typeof input === "string") {
@@ -79,94 +95,35 @@ class App extends Component {
     }
   }
   
-
-  outputForWorkLinks(projects, work) {
-    return projects.map((project, idx) => {
-      return (
-        <div className="about" key={idx}>
-          <br />
-          <a className="anchor" target="_blank" href={work[project]}>
-            {project}
-          </a>
-          <br />
-        </div>
-      );
-    });
-  }
-
-  mainOutput() {
-    let aboutInput = ['about', 'who are you', 'hi', 'hello']
-    if (aboutInput.includes(this.state.input)) {
-        return (
-          <div className="about">
-            <p>Hi,</p>
-            <br />
-            <p>I'm a full stack developer</p>
-            <p>specializing in javascript and</p>
-            <p>making turkey sandwiches.</p>
-            <br />
-          </div>
-        )
-    } else if (this.state.input === 'weather') {
-      return this.outputForWeather()
-    } else if (this.state.input === 'latest news') {
-      return this.outputForNews();
-    } else {
-      return this.outputInstructions();
-    }
-  }
-
-  outputForWeather() {
-    return (
-      <div className="about">
-        <p>Hi,</p>
-        <br/>
-        <p>It is {this.state.temp} degrees Farenheit</p>
-        <p>and a {this.state.weatherDescr} kind of</p>
-        day in {this.state.cityName}.
-        <br />
-      </div>
-    )
-  }
-
-  outputForNews() {
-    return (
-      <div className="about-news">
-        <p >News:</p>
-        <a className="anchor-news" target="_blank" href={this.state.newsUrl}>
-          {this.state.newsTitle}   
-        </a>
-        <p>{this.state.newsDesc}</p>
-      </div>
-    )
-  }
-
-  outputInstructions() {
-    return (
-      <div>
-        <p className="about-title">List of Commands:</p>
-        <p className="about">About</p>
-        <p className="about">Projects</p>
-        <p className="about">Links</p>
-        <p className="about">Weather</p>
-        <p className="about">Latest News</p>
-        <br />
-      </div>
-    )
-  }
-
   outputAudio() {
     let audio = document.getElementById("data");
     audio.play();
   }
 
+  mainOutput() {
+    const state = this.state
+    let aboutInput = ['about', 'who are you', 'hi', 'hello']
+    if (aboutInput.includes(state.input)) {
+      return <AboutOutput />
+    } else if (state.input === 'weather') {
+      return <WeatherOutput temp={state.temp} weatherDescr={state.weatherDescr} cityName={state.cityName} />
+    } else if (state.input === 'latest news') {
+      return <NewsOutput newsUrl={state.newsUrl} newsTitle={state.newsTitle} newsDesc={state.newsDesc} />;
+    } else if (state.input === 'getting location') {
+      return <AskForLocation />
+    } else {
+      return <OutputInstructions />;
+    }
+  }
+
+
+  // use switch statements instead of if statements 
   handleSubmit(evt) {
     evt.preventDefault();
-    const projects = Object.keys(this.state.output) || this.state.output;
-    const work = this.state.output;
     let input = evt.target.inputval.value;
     let workInput = ['work', 'projects']
     let aboutInput = ['about', 'who are you', 'hi', 'hello']
+    let changeState = () => this.setState({output: '', input})
     if (workInput.includes(input)) {
       this.setState({
         output: {
@@ -178,7 +135,7 @@ class App extends Component {
       });
       evt.target.inputval.value = "";
       this.outputAudio();
-      return this.outputForWorkLinks(projects, work);
+      return <WorkLinks output={this.state.output} />;
     } else if (input === "links") {
       this.setState({
         output: {
@@ -187,29 +144,30 @@ class App extends Component {
           Instagram: "https://www.instagram.com/lurimm/",
           Photography: "http://luis-rincon.com",
           YouTube: "https://www.youtube.com/channel/UCA2LI0774ZPTjxB-X-3mjSg?view_as=subscriber",
+          // Resume: "Here goes a redirect to the resume made in html and css"
         },
         input
       });
       evt.target.inputval.value = "";
       this.outputAudio();
-      return this.outputForWorkLinks(projects, work);
+      return <WorkLinks output={this.state.output} />;
     } else if (aboutInput.includes(input)) {
-      this.setState({ output: "", input });
+      changeState()
       evt.target.inputval.value = "";
       this.outputAudio();
       return this.mainOutput();
     } else if (input === 'weather') {
-      this.setState({output: "", input})
+      changeState()
       evt.target.inputval.value = "";
       this.outputAudio()
       return this.mainOutput()
     } else if (input === 'latest news') {
-      this.setState({output: '', input})
+      changeState()
       evt.target.inputval.value = "";
       this.outputAudio()
       return this.mainOutput()
     } else {
-      this.setState({ output: "", input });
+      changeState()
       evt.target.inputval.value = "";
       this.outputAudio();
       return this.mainOutput();
@@ -217,9 +175,7 @@ class App extends Component {
   }
 
   render() {
-    const projects = Object.keys(this.state.output) || this.state.output;
     const work = this.state.output;
-    let about;
     return (
       <div className="App">
         <h1 className="white luis">// LUIS RINCON //</h1>
@@ -238,10 +194,12 @@ class App extends Component {
               </button>
             </form>
             <audio
+              ref={(beep) => { this.audio = beep }}
               id="beep"
               src="https://firebasestorage.googleapis.com/v0/b/symbalplayer.appspot.com/o/music%2Fbeep.wav?alt=media&token=e076788f-03ae-433c-98cf-d977b1d38f80"
             />
             <audio
+              ref={(data) => { this.audio = data }}
               id="data"
               src="https://firebasestorage.googleapis.com/v0/b/symbalplayer.appspot.com/o/music%2Fdata_1.mp3?alt=media&token=534f968d-a663-4b3a-9282-5061ac52acdb"
             />
@@ -250,9 +208,10 @@ class App extends Component {
           <div className="output-panel">
             <p className="white">OUTPUT</p>
             <div className="output-box">
-                {typeof work === "string"
+                {typeof work === 'string'
                   ? this.mainOutput()
-                  : this.outputForWorkLinks(projects, work)}
+                  : <WorkLinks output={this.state.output} /> 
+                }
             </div>
             <p>hi</p>
           </div>
