@@ -2,8 +2,8 @@ import React, { Component } from "react";
 import logo from "./logo.svg";
 import "./App.css";
 import axios from 'axios'
-import { weatherAPIKey, newsAPIKey } from './index'
-import { WorkLinks, OutputInstructions, WeatherOutput, NewsOutput, AboutOutput, AskForLocation } from './components'
+import { weatherAPIKey, newsAPIKey } from './secrets'
+import { WorkLinks, OutputInstructions, WeatherOutput, NewsOutput, AboutOutput, AskForLocation, LocationDenied } from './components'
 
 class App extends Component {
   constructor() {
@@ -20,12 +20,14 @@ class App extends Component {
       newsTitle: '',
       newsDesc: '',
       newsUrl: '',
+      denied: false,
     };
   }
 
   componentDidMount() {
     // this.outputInstructions();
     this.askForLocation()
+
     this.getCurrentLocation();
     this.getNews();
   }
@@ -60,15 +62,20 @@ class App extends Component {
       let lat = position.coords.latitude;
       let long = position.coords.longitude;
       this.setState({
-        lat, long
+        lat,
+        long,
+        input: ''
       })
+      this.mainOutput()
+      this.outputAudio()
       this.getWeather()
     }, (err) => {
       if (err.code === err.PERMISSION_DENIED) {
-        console.log('you have denied access to this location')
-      } else {
-        this.setState({input: ''})
+        this.setState({input: '', denied: true})
+        console.log(this.state)
         this.mainOutput()
+        this.outputAudio()
+        console.log(err)
       }
     })
   }
@@ -100,18 +107,28 @@ class App extends Component {
     audio.play();
   }
 
+  changeToCommands() {
+    setTimeout(() => {
+      this.mainOutput()
+    }, 5000)
+  }
+
   mainOutput() {
     const state = this.state
     let aboutInput = ['about', 'who are you', 'hi', 'hello']
     if (aboutInput.includes(state.input)) {
       return <AboutOutput />
-    } else if (state.input === 'weather') {
+    } else if (state.input === 'weather' && !state.denied) {
       return <WeatherOutput temp={state.temp} weatherDescr={state.weatherDescr} cityName={state.cityName} />
+    } else if (state.denied && state.input === 'weather') {
+      // state.denied = !state.denied;
+      return <LocationDenied />
     } else if (state.input === 'latest news') {
       return <NewsOutput newsUrl={state.newsUrl} newsTitle={state.newsTitle} newsDesc={state.newsDesc} />;
     } else if (state.input === 'getting location') {
       return <AskForLocation />
     } else {
+      this.outputAudio();
       return <OutputInstructions />;
     }
   }

@@ -4,4 +4,4 @@ export { default as WeatherOutput } from './WeatherOutput'
 export { default as NewsOutput } from './NewsOutput'
 export { default as AboutOutput } from './AboutOutput'
 export { default as AskForLocation } from './AskForLocation'
-
+export { default as LocationDenied } from './LocationDenied'
