@@ -21,8 +21,8 @@ body {
 }
 
 @font-face {
-  font-family: Consolas;
-  src: url(https://firebasestorage.googleapis.com/v0/b/friendlychat-e7830.appspot.com/o/CONSOLA.TTF?alt=media&token=3565bbce-3415-47e1-b8fd-b8dad28292d8);
+  font-family: 'Consola';
+  src: url('Consolas.ttf');
 }
 .panels {
   display: flex;
